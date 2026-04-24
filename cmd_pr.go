@@ -296,6 +296,8 @@ func cmdPRSummary(args []string) error {
 		return err
 	}
 
+	emitLegend("pr")
+
 	prData, err := client.Get(fmt.Sprintf("/repos/%s/%s/pulls/%s", owner, repo, number))
 	if err != nil {
 		return err

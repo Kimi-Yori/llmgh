@@ -89,6 +89,7 @@ func cmdIssueSummary(args []string) error {
 		return err
 	}
 
+	emitLegend("issue")
 	emitIssueViewRecords(issueData)
 
 	comments, err := fetchIssueComments(client, owner, repo, number, 100)

@@ -36,6 +36,18 @@ func formatField(field string) string {
 	return field
 }
 
+func emitLegend(kind string) {
+	if !denseMode {
+		return
+	}
+	switch kind {
+	case "pr":
+		tsv("legend", "v=1", "merg=mergeable", "cmt=comment", "rc=review_comment", "chk=check", "err=error", "trunc=truncated")
+	case "issue":
+		tsv("legend", "v=1", "cmt=comment", "err=error", "trunc=truncated")
+	}
+}
+
 func recordKind(full, dense string) string {
 	if denseMode {
 		return dense
