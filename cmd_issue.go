@@ -24,25 +24,7 @@ func cmdIssueView(args []string) error {
 		return err
 	}
 
-	tsv("issue", str(data["number"]), str(data["state"]),
-		nested(data, "user", "login"),
-		str(data["title"]),
-		fmtTime(data["created_at"]),
-	)
-
-	if labels := fmtLabels(data["labels"]); labels != "" {
-		tsv("labels", labels)
-	}
-
-	if body := str(data["body"]); body != "" {
-		if len(body) > 500 {
-			body = body[:500] + "..."
-		}
-		tsv("body", body)
-	}
-
-	tsv("meta", "comments="+str(data["comments"]))
-
+	emitIssueViewRecords(data)
 	return nil
 }
 
@@ -82,6 +64,55 @@ func cmdIssueList(args []string) error {
 
 	if len(items) >= limit {
 		tsv("page", "issues", fmt.Sprintf("shown=%d", len(items)), "has_more=true")
+	}
+
+	return nil
+}
+
+func cmdIssueSummary(args []string) error {
+	owner, repo, args, err := resolveRepo(args)
+	if err != nil {
+		return err
+	}
+	if len(args) < 1 {
+		return fmt.Errorf("usage: llmgh issue summary <number>")
+	}
+	number := args[0]
+
+	client, err := NewClient()
+	if err != nil {
+		return err
+	}
+
+	issueData, err := client.Get(fmt.Sprintf("/repos/%s/%s/issues/%s", owner, repo, number))
+	if err != nil {
+		return err
+	}
+
+	emitIssueViewRecords(issueData)
+
+	comments, err := fetchIssueComments(client, owner, repo, number, 100)
+	if err != nil {
+		emitSectionError("comments", err)
+		return nil
+	}
+
+	sortedComments := sortIssueCommentsDesc(comments)
+	shown := len(sortedComments)
+	if shown > 10 {
+		shown = 10
+	}
+
+	totalComments := intFromAny(issueData["comments"])
+	tsv(recordKind("comments_meta", "comments_meta"),
+		"issue="+number,
+		fmt.Sprintf("total=%d", totalComments),
+		fmt.Sprintf("shown=%d", shown),
+		fmt.Sprintf("truncated=%t", totalComments > shown),
+	)
+
+	for _, comment := range sortedComments[:shown] {
+		tsv(recordKind("comment", "cmt"), number, comment.ID, comment.User, comment.CreatedAt, comment.Body)
 	}
 
 	return nil

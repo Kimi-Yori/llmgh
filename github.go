@@ -138,6 +138,11 @@ func (c *Client) GetList(path string) ([]map[string]any, error) {
 	return result, nil
 }
 
+// GitHub secondary rate limit（短時間連続リクエスト制限）を回避するための間隔
+func apiWait() {
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (c *Client) GetRateLimit() (map[string]any, error) {
 	return c.Get("/rate_limit")
 }

@@ -7,23 +7,33 @@ import (
 
 const version = "0.1.0"
 
+var denseMode = true
+
 func main() {
-	if len(os.Args) < 2 {
+	args := os.Args[1:]
+	fullMode, args := parseSwitchFlag(args, "--full")
+	denseMode = !fullMode
+
+	if len(args) < 1 {
 		printUsage()
 		os.Exit(1)
 	}
 
-	cmd := os.Args[1]
-	args := os.Args[2:]
+	cmd := args[0]
+	args = args[1:]
 
 	switch cmd {
 	case "status":
 		if err := cmdStatus(args); err != nil {
 			exitError(err)
 		}
+	case "url":
+		if err := cmdURL(args); err != nil {
+			exitError(err)
+		}
 	case "pr":
 		if len(args) < 1 {
-			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh pr <view|list|files|checks|comments> [args]")
+			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh pr <view|list|files|checks|comments|reviews|review-detail|summary> [args]")
 			os.Exit(1)
 		}
 		sub := args[0]
@@ -49,13 +59,25 @@ func main() {
 			if err := cmdPRComments(subArgs); err != nil {
 				exitError(err)
 			}
+		case "reviews":
+			if err := cmdPRReviews(subArgs); err != nil {
+				exitError(err)
+			}
+		case "review-detail":
+			if err := cmdPRReviewDetail(subArgs); err != nil {
+				exitError(err)
+			}
+		case "summary":
+			if err := cmdPRSummary(subArgs); err != nil {
+				exitError(err)
+			}
 		default:
 			fmt.Fprintf(os.Stderr, "ERR\tusage\tunknown pr subcommand: %s\n", sub)
 			os.Exit(1)
 		}
 	case "issue":
 		if len(args) < 1 {
-			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh issue <view|list> [args]")
+			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh issue <view|list|summary> [args]")
 			os.Exit(1)
 		}
 		sub := args[0]
@@ -67,6 +89,10 @@ func main() {
 			}
 		case "list":
 			if err := cmdIssueList(subArgs); err != nil {
+				exitError(err)
+			}
+		case "summary":
+			if err := cmdIssueSummary(subArgs); err != nil {
 				exitError(err)
 			}
 		default:
@@ -89,17 +115,26 @@ func printUsage() {
 Usage: llmgh <command> [args]
 
 Commands:
-  status                 repo/auth/rate info
-  pr view <number>       PR details
-  pr list [--state X]    list PRs
-  pr files <number>      changed files
-  pr checks <number>     CI check status
-  issue view <number>    issue details
-  issue list [--state X] list issues
+  url <github-url>                 dispatch from GitHub URL
+  status                           repo/auth/rate info
+  pr view <number>                 PR details
+  pr list [--state X]              list PRs
+  pr files <number>                changed files
+  pr checks <number>               CI check status
+  pr comments <number>             PR comments
+  pr reviews <number>              PR review events
+  pr review-detail <number> <id>   review with comments
+  pr summary <number>              PR composite summary
+  issue view <number>              issue details
+  issue list [--state X]           list issues
+  issue summary <number>           issue composite summary
 
 Options:
+  --full                  use legacy full output format
   --repo owner/repo      target repository (default: detect from git remote)
   --limit N              max results (default: 30)
+  --max-files N          max file rows in pr summary (default: 15)
+  --max-comments N       max comment rows in pr summary (default: 10)
 
 Auth: LLMGH_TOKEN > GH_TOKEN > GITHUB_TOKEN
 `, version)
