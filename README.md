@@ -143,8 +143,9 @@ llmgh pr summary 123 --repo owner/repo --checks          # CI結果も含める
 llmgh pr summary 123 --repo owner/repo --max-files 5 --max-comments 3
 ```
 
-Dense output (default):
+Dense output (default, legend + abbreviated record kinds):
 ```
+legend	v=1	merg=mergeable	cmt=comment	rc=review_comment	chk=check	err=error	trunc=truncated
 pr	123	open	main	feature/foo	alice	Fix auth flow	2026-04-23T10:12Z
 merg		draft=F	comments=3	changed=5	+120	-30
 labels	bug,security
@@ -187,12 +188,13 @@ llmgh issue summary 456 --repo owner/repo
 ```
 
 ```
-issue	456	open	alice	Bug in auth flow	2026-04-20T08:00:00Z
+legend	v=1	cmt=comment	err=error	trunc=truncated
+issue	456	open	alice	Bug in auth flow	2026-04-20T08:00Z
 labels	bug,ClaudeCode
 body	Description of the issue...
 meta	comments=5
-comments_meta	issue=456	total=5	shown=5	truncated=false
-comment	456	9999	bob	2026-04-24T10:00:00Z	Needs a retry path.
+comments_meta	issue=456	total=5	shown=5	trunc=F
+cmt	456	9999	bob	2026-04-24T10:00Z	Needs a retry path.
 ```
 
 ## Output format
@@ -200,8 +202,9 @@ comment	456	9999	bob	2026-04-24T10:00:00Z	Needs a retry path.
 - TSV (tab-separated), dense by default (`--full` for verbose)
 - 1 line per record
 - tabs/newlines/carriage returns in field values are escaped as `\t`, `\n`, `\r`
+- Summary commands emit a `legend` row as the first line (dense only), e.g. `legend v=1 merg=mergeable cmt=comment ...`
 - Dense record kinds: `merg`(mergeable), `cmt`(comment), `rc`(review_comment), `chk`(check), `err`(error)
-- Full record kinds (--full): `mergeable`, `comment`, `review_comment`, `check`, `error`
+- Full record kinds (--full): `mergeable`, `comment`, `review_comment`, `check`, `error` (no legend)
 - Gemini review image tags (`![medium](url)`) are auto-cleaned to `[medium]` in dense mode
 - Consecutive `\n\n` normalized to `\n` in dense mode
 - Errors go to stderr in `ERR\tkind\tmessage` format
