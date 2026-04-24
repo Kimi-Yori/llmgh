@@ -5,11 +5,21 @@ Compact GitHub context reader for LLM agents.
 llmgh is not a replacement for `gh`.
 Default output is stable TSV, optimized for token efficiency.
 
-## Install
+## Build
 
 ```bash
-CGO_ENABLED=0 go build -ldflags "-s -w" -o llmgh .
-cp llmgh ~/tools/llmgh/
+make build      # ローカルビルド
+make test       # テスト実行
+make install    # /usr/local/bin にインストール
+make release    # クロスビルド (linux/amd64, darwin/amd64, darwin/arm64)
+make clean      # バイナリ・dist削除
+```
+
+クロスビルド成果物は `dist/` に出力:
+```
+dist/llmgh-linux-amd64   (6.2MB)
+dist/llmgh-darwin-amd64  (6.2MB)
+dist/llmgh-darwin-arm64  (5.8MB)
 ```
 
 ## Auth
