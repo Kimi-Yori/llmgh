@@ -169,7 +169,7 @@ func cmdPRComments(args []string) error {
 		tsv(recordKind("comment", "cmt"), str(c["id"]),
 			nested(c, "user", "login"),
 			fmtTime(c["created_at"]),
-			truncateText(str(c["body"]), 300),
+			sanitizeText(str(c["body"])),
 		)
 	}
 
@@ -183,7 +183,7 @@ func cmdPRComments(args []string) error {
 			nested(c, "user", "login"),
 			str(c["path"]),
 			fmtTime(c["created_at"]),
-			truncateText(str(c["body"]), 300),
+			sanitizeText(str(c["body"])),
 		)
 	}
 
@@ -221,7 +221,7 @@ func cmdPRReviews(args []string) error {
 			nested(review, "user", "login"),
 			str(review["state"]),
 			fmtTime(review["created_at"]),
-			truncateText(str(review["body"]), 300),
+			sanitizeText(str(review["body"])),
 		)
 	}
 
@@ -257,7 +257,7 @@ func cmdPRReviewDetail(args []string) error {
 		nested(review, "user", "login"),
 		str(review["state"]),
 		fmtTime(review["created_at"]),
-		truncateText(str(review["body"]), 300),
+		sanitizeText(str(review["body"])),
 	)
 
 	comments, err := client.GetList(fmt.Sprintf("/repos/%s/%s/pulls/%s/reviews/%s/comments?per_page=100", owner, repo, number, reviewID))
@@ -271,7 +271,7 @@ func cmdPRReviewDetail(args []string) error {
 			nested(comment, "user", "login"),
 			str(comment["path"]),
 			fmtTime(comment["created_at"]),
-			truncateText(str(comment["body"]), 300),
+			sanitizeText(str(comment["body"])),
 		)
 	}
 
@@ -354,7 +354,7 @@ func cmdPRSummary(args []string) error {
 				nested(review, "user", "login"),
 				str(review["state"]),
 				fmtTime(review["created_at"]),
-				truncateText(str(review["body"]), 300),
+				sanitizeText(str(review["body"])),
 			)
 		}
 	}

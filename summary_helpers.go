@@ -35,7 +35,7 @@ func emitPRViewRecords(data map[string]any) {
 	)
 
 	if body := str(data["body"]); body != "" {
-		tsv("body", truncateText(body, 500))
+		tsv("body", sanitizeText(body))
 	}
 
 	if labels := fmtLabels(data["labels"]); labels != "" {
@@ -55,7 +55,7 @@ func emitIssueViewRecords(data map[string]any) {
 	}
 
 	if body := str(data["body"]); body != "" {
-		tsv("body", truncateText(body, 500))
+		tsv("body", sanitizeText(body))
 	}
 
 	tsv("meta", "comments="+str(data["comments"]))
@@ -111,7 +111,7 @@ func mergePRComments(issueComments, reviewComments []map[string]any) []mergedCom
 			ID:        str(c["id"]),
 			User:      nested(c, "user", "login"),
 			CreatedAt: createdAt,
-			Body:      truncateText(str(c["body"]), 300),
+			Body:      sanitizeText(str(c["body"])),
 			SortTime:  parseSortTime(createdAt),
 		})
 	}
@@ -124,7 +124,7 @@ func mergePRComments(issueComments, reviewComments []map[string]any) []mergedCom
 			User:      nested(c, "user", "login"),
 			Path:      str(c["path"]),
 			CreatedAt: createdAt,
-			Body:      truncateText(str(c["body"]), 300),
+			Body:      sanitizeText(str(c["body"])),
 			SortTime:  parseSortTime(createdAt),
 		})
 	}
@@ -145,7 +145,7 @@ func sortIssueCommentsDesc(items []map[string]any) []mergedComment {
 			ID:        str(c["id"]),
 			User:      nested(c, "user", "login"),
 			CreatedAt: createdAt,
-			Body:      truncateText(str(c["body"]), 300),
+			Body:      sanitizeText(str(c["body"])),
 			SortTime:  parseSortTime(createdAt),
 		})
 	}

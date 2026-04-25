@@ -69,35 +69,30 @@ func TestTSVDenseNormalizesDoubleNewlines(t *testing.T) {
 	}
 }
 
-func TestTruncateText(t *testing.T) {
-	setDenseMode(t, true)
+func TestSanitizeTextPreservesFullContent(t *testing.T) {
+	setDenseMode(t, false)
 
-	tests := []struct {
-		name string
-		in   string
-		max  int
-		want string
-	}{
-		{name: "empty", in: "", max: 5, want: ""},
-		{name: "exact", in: "hello", max: 5, want: "hello"},
-		{name: "over", in: "hello!", max: 5, want: "hello..."},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := truncateText(tt.in, tt.max); got != tt.want {
-				t.Fatalf("truncateText(%q, %d) = %q, want %q", tt.in, tt.max, got, tt.want)
-			}
-		})
+	long := "This is a very long text that would have been truncated before but should now be preserved in full mode without any changes at all."
+	if got := sanitizeText(long); got != long {
+		t.Fatalf("sanitizeText() in full mode altered text: got %q", got)
 	}
 }
 
-func TestTruncateTextDenseSanitizesGeminiTag(t *testing.T) {
+func TestSanitizeTextDenseCleansGeminiTag(t *testing.T) {
 	setDenseMode(t, true)
 
 	in := "![high](https://www.gstatic.com/codereviewagent/high-priority.svg)"
-	if got := truncateText(in, 100); got != "[high]" {
-		t.Fatalf("truncateText(%q, 100) = %q, want %q", in, got, "[high]")
+	if got := sanitizeText(in); got != "[high]" {
+		t.Fatalf("sanitizeText(%q) = %q, want %q", in, got, "[high]")
+	}
+}
+
+func TestSanitizeTextDensePreservesContent(t *testing.T) {
+	setDenseMode(t, true)
+
+	long := "This is a long review comment body that should be fully preserved even in dense mode because truncation is no longer applied to text content."
+	if got := sanitizeText(long); got != long {
+		t.Fatalf("sanitizeText() in dense mode truncated text: got %q", got)
 	}
 }
 

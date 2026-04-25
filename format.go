@@ -169,14 +169,11 @@ func parseSwitchFlag(args []string, flag string) (bool, []string) {
 	return false, args
 }
 
-func truncateText(s string, max int) string {
+func sanitizeText(s string) string {
 	if denseMode {
 		s = sanitizeDenseText(s)
 	}
-	if len(s) <= max {
-		return s
-	}
-	return s[:max] + "..."
+	return s
 }
 
 func sanitizeDenseText(s string) string {
