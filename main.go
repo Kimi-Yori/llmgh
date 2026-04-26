@@ -75,6 +75,22 @@ func main() {
 			fmt.Fprintf(os.Stderr, "ERR\tusage\tunknown pr subcommand: %s\n", sub)
 			os.Exit(1)
 		}
+	case "file":
+		if len(args) < 1 {
+			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh file <get> <path> [--repo owner/repo] [--ref branch]")
+			os.Exit(1)
+		}
+		sub := args[0]
+		subArgs := args[1:]
+		switch sub {
+		case "get":
+			if err := cmdFileGet(subArgs); err != nil {
+				exitError(err)
+			}
+		default:
+			fmt.Fprintf(os.Stderr, "ERR\tusage\tunknown file subcommand: %s\n", sub)
+			os.Exit(1)
+		}
 	case "issue":
 		if len(args) < 1 {
 			fmt.Fprintln(os.Stderr, "ERR\tusage\tllmgh issue <view|list|summary> [args]")
@@ -125,6 +141,7 @@ Commands:
   pr reviews <number>              PR review events
   pr review-detail <number> <id>   review with comments
   pr summary <number>              PR composite summary
+  file get <path>                  raw file content
   issue view <number>              issue details
   issue list [--state X]           list issues
   issue summary <number>           issue composite summary
@@ -132,6 +149,7 @@ Commands:
 Options:
   --full                  use legacy full output format
   --repo owner/repo      target repository (default: detect from git remote)
+  --ref REF              target ref for file get
   --limit N              max results (default: 30)
   --max-files N          max file rows in pr summary (default: 15)
   --max-comments N       max comment rows in pr summary (default: 10)

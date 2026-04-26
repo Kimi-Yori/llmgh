@@ -39,7 +39,13 @@ Token resolution order:
 llmgh url https://github.com/owner/repo/pull/123#pullrequestreview-456
 ```
 
-GitHub URL を解釈して、対応する `status` / `pr` / `issue` サブコマンドに振り分けます。
+GitHub URL を解釈して、対応する `status` / `pr` / `issue` / `file` サブコマンドに振り分けます。
+
+`blob` / `tree` URL は `file get` に振り分けます。GitHub URL は `blob/<ref>/<path>` の区切りをURLだけでは一意に判定できないため、URL振り分けでは `blob` / `tree` 直後の1セグメントをrefとして扱います。`feature/foo` のような `/` を含むrefでは、明示的に `file get` を使ってください。
+
+```bash
+llmgh file get src/lib/utils.ts --repo owner/repo --ref feature/foo
+```
 
 ### status
 
@@ -197,6 +203,15 @@ comments_meta	issue=456	total=5	shown=5	trunc=F
 cmt	456	9999	bob	2026-04-24T10:00Z	Needs a retry path.
 ```
 
+### file get
+
+```bash
+llmgh file get path/to/file --repo owner/repo --ref main
+llmgh url https://github.com/owner/repo/blob/main/path/to/file
+```
+
+GitHub Contents APIのrawモードでファイル内容を標準出力します。ファイルパスの各セグメントはAPIリクエスト時にエスケープされるため、スペースや `?` / `#` を含むファイル名も扱えます。
+
 ## Output format
 
 - TSV (tab-separated), dense by default (`--full` for verbose)
@@ -227,6 +242,7 @@ cmt	456	9999	bob	2026-04-24T10:00Z	Needs a retry path.
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--repo owner/repo` | Target repository | Detect from git remote |
+| `--ref REF` | Target ref for `file get` | Repository default branch |
 | `--limit N` | Max results | 30 |
 | `--max-files N` | Max file rows in `pr summary` | 15 |
 | `--max-comments N` | Max merged comment rows in `pr summary` | 10 |

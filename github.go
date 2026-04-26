@@ -127,6 +127,8 @@ func (c *Client) GetList(path string) ([]map[string]any, error) {
 		return nil, &APIError{Kind: "rate_limit", Status: 403, Message: "forbidden/rate limited", ExitCode: 4}
 	case resp.StatusCode == 404:
 		return nil, &APIError{Kind: "not_found", Status: 404, Message: "not found", ExitCode: 3}
+	case resp.StatusCode == 429:
+		return nil, &APIError{Kind: "rate_limit", Status: 429, Message: "rate limited", ExitCode: 4}
 	case resp.StatusCode >= 400:
 		return nil, &APIError{Kind: "api", Status: resp.StatusCode, Message: string(body), ExitCode: 6}
 	}
@@ -136,6 +138,45 @@ func (c *Client) GetList(path string) ([]map[string]any, error) {
 		return nil, fmt.Errorf("json parse: %w", err)
 	}
 	return result, nil
+}
+
+func (c *Client) GetRaw(path string) ([]byte, error) {
+	url := c.host + path
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("request build: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.github.raw+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpCli.Do(req)
+	if err != nil {
+		return nil, &APIError{Kind: "network", Message: err.Error(), ExitCode: 5}
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &APIError{Kind: "network", Message: "read body: " + err.Error(), ExitCode: 5}
+	}
+
+	switch {
+	case resp.StatusCode == 401:
+		return nil, &APIError{Kind: "auth", Status: 401, Message: "unauthorized", ExitCode: 2}
+	case resp.StatusCode == 403:
+		return nil, &APIError{Kind: "rate_limit", Status: 403, Message: "forbidden/rate limited", ExitCode: 4}
+	case resp.StatusCode == 404:
+		return nil, &APIError{Kind: "not_found", Status: 404, Message: "not found", ExitCode: 3}
+	case resp.StatusCode == 429:
+		return nil, &APIError{Kind: "rate_limit", Status: 429, Message: "rate limited", ExitCode: 4}
+	case resp.StatusCode >= 400:
+		return nil, &APIError{Kind: "api", Status: resp.StatusCode, Message: string(body), ExitCode: 6}
+	}
+
+	return body, nil
 }
 
 // GitHub secondary rate limit（短時間連続リクエスト制限）を回避するための間隔

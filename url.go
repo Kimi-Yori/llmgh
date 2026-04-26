@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 )
+
+const fileURLRefHint = "blob/tree URL parsing treats the first segment after blob/tree as the ref; for refs containing '/', use llmgh file get <path> --repo owner/repo --ref <ref>"
 
 func cmdURL(args []string) error {
 	if len(args) < 1 {
@@ -32,6 +35,19 @@ func cmdURL(args []string) error {
 		default:
 			return fmt.Errorf("unsupported pr command from url: %s", commandArgs[0])
 		}
+	case "file":
+		if len(commandArgs) < 2 {
+			return fmt.Errorf("url parse produced empty file command")
+		}
+		switch commandArgs[0] {
+		case "get":
+			if err := cmdFileGet(commandArgs[1:]); err != nil {
+				return addFileURLHint(err)
+			}
+			return nil
+		default:
+			return fmt.Errorf("unsupported file command from url: %s", commandArgs[0])
+		}
 	case "issue":
 		if len(commandArgs) < 1 {
 			return fmt.Errorf("url parse produced empty issue command")
@@ -49,15 +65,16 @@ func cmdURL(args []string) error {
 
 func parseGitHubURL(raw string) (string, []string, error) {
 	trimmed := strings.TrimSpace(raw)
-	trimmed = strings.TrimPrefix(trimmed, "https://")
-	trimmed = strings.TrimPrefix(trimmed, "http://")
-	if !strings.HasPrefix(trimmed, "github.com/") {
+	if !strings.Contains(trimmed, "://") {
+		trimmed = "https://" + trimmed
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil || parsed.Host != "github.com" {
 		return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 	}
 
-	pathAndFragment := strings.TrimPrefix(trimmed, "github.com/")
-	path, fragment, _ := strings.Cut(pathAndFragment, "#")
-	parts := strings.Split(strings.Trim(path, "/"), "/")
+	parts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
 	if len(parts) < 2 {
 		return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 	}
@@ -76,8 +93,8 @@ func parseGitHubURL(raw string) (string, []string, error) {
 			return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 		}
 		number := parts[3]
-		if strings.HasPrefix(fragment, "pullrequestreview-") {
-			reviewID := strings.TrimPrefix(fragment, "pullrequestreview-")
+		if strings.HasPrefix(parsed.Fragment, "pullrequestreview-") {
+			reviewID := strings.TrimPrefix(parsed.Fragment, "pullrequestreview-")
 			if reviewID == "" {
 				return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 			}
@@ -92,7 +109,25 @@ func parseGitHubURL(raw string) (string, []string, error) {
 			return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 		}
 		return "issue", []string{"view", parts[3], "--repo", repoArg}, nil
+	case "blob", "tree":
+		if len(parts) < 5 {
+			return "", nil, fmt.Errorf("unsupported github url: %s", raw)
+		}
+		ref := parts[3]
+		filePath := strings.Join(parts[4:], "/")
+		return "file", []string{"get", filePath, "--repo", repoArg, "--ref", ref}, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported github url: %s", raw)
 	}
+}
+
+func addFileURLHint(err error) error {
+	apiErr, ok := err.(*APIError)
+	if !ok || apiErr.Kind != "not_found" {
+		return err
+	}
+
+	withHint := *apiErr
+	withHint.Message = withHint.Message + "; " + fileURLRefHint
+	return &withHint
 }

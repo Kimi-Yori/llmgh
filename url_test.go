@@ -44,6 +44,42 @@ func TestParseGitHubURL(t *testing.T) {
 			wantArgs:    []string{"--repo", "owner/repo"},
 		},
 		{
+			name:        "blob file",
+			raw:         "https://github.com/mattpocock/skills/blob/main/improve-codebase-architecture/LANGUAGE.md",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "improve-codebase-architecture/LANGUAGE.md", "--repo", "mattpocock/skills", "--ref", "main"},
+		},
+		{
+			name:        "blob nested path",
+			raw:         "https://github.com/owner/repo/blob/develop/src/lib/utils.ts",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "src/lib/utils.ts", "--repo", "owner/repo", "--ref", "develop"},
+		},
+		{
+			name:        "blob query and line fragment are ignored",
+			raw:         "https://github.com/owner/repo/blob/main/src/lib/utils.ts?plain=1#L10",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "src/lib/utils.ts", "--repo", "owner/repo", "--ref", "main"},
+		},
+		{
+			name:        "blob encoded path is unescaped",
+			raw:         "https://github.com/owner/repo/blob/main/docs/file%20name%23v1%3F.md",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "docs/file name#v1?.md", "--repo", "owner/repo", "--ref", "main"},
+		},
+		{
+			name:        "blob slash ref limitation",
+			raw:         "https://github.com/owner/repo/blob/feature/foo/src/lib/utils.ts",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "foo/src/lib/utils.ts", "--repo", "owner/repo", "--ref", "feature"},
+		},
+		{
+			name:        "tree path",
+			raw:         "https://github.com/owner/repo/tree/main/src/lib",
+			wantCommand: "file",
+			wantArgs:    []string{"get", "src/lib", "--repo", "owner/repo", "--ref", "main"},
+		},
+		{
 			name:    "invalid url",
 			raw:     "https://example.com/owner/repo/pull/123",
 			wantErr: true,
