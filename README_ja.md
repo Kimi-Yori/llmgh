@@ -21,10 +21,18 @@ llmghは情報の欠落なしに60-90%のトークン削減を実現します。
 
 ## インストール
 
-**ビルド済みバイナリ**（Linux x86_64）:
+**ビルド済みバイナリ:**
 
 ```bash
+# Linux x86_64
 curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-linux-amd64
+
+# macOS Apple Silicon (M1/M2/M3/M4)
+curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-darwin-arm64
+
+# macOS Intel
+curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-darwin-amd64
+
 chmod +x llmgh
 sudo mv llmgh /usr/local/bin/
 ```

@@ -21,10 +21,18 @@ llmgh gives 60-90% fewer tokens with zero information loss.
 
 ## Install
 
-**Pre-built binary** (Linux x86_64):
+**Pre-built binary:**
 
 ```bash
+# Linux x86_64
 curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-linux-amd64
+
+# macOS Apple Silicon (M1/M2/M3/M4)
+curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-darwin-arm64
+
+# macOS Intel
+curl -L -o llmgh https://github.com/Kimi-Yori/llmgh/releases/latest/download/llmgh-darwin-amd64
+
 chmod +x llmgh
 sudo mv llmgh /usr/local/bin/
 ```
